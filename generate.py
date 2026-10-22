@@ -39,7 +39,7 @@ def parse_ts(text, prev):
 def parse(path, rng):
     people, chats = {}, []
     cur, section = None, None
-    for n, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+    for n, raw in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
@@ -73,10 +73,13 @@ def parse(path, rng):
         if section in ("chat_header", "chat"):
             section = "chat"
             m = MSG_RE.match(line)
-            if not m:
-                sys.exit(f"{path.name}:{n}: cannot parse line: {raw}")
-            ts_text, sender, body = m.groups()
             msgs = cur["messages"]
+            if m and m.group(2) in people:
+                ts_text, sender, body = m.groups()
+            elif msgs:
+                ts_text, sender, body = None, msgs[-1]["from"], line
+            else:
+                sys.exit(f"{path.name}:{n}: cannot parse line: {raw}")
             if msgs:
                 prev = msgs[-1]["_dt"]
             else:
@@ -136,3 +139,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+

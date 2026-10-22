@@ -1,4 +1,4 @@
-# ---------------------------------------------------------------
+﻿# ---------------------------------------------------------------
 # Header: define every person ONCE here. Chats reference them by id.
 # The person marked "me = true" is the owner of the chat window.
 # Omit "avatar" to get an auto-generated initials avatar.
@@ -15,7 +15,7 @@ name = Maya Rivera
 avatar = assets/maya.webp
 phone = +1 555 010 2030
 email = maya.rivera@example.com
-status = Coffee first, questions later ☕
+status = Coffee first, questions later â˜•
 
 [person tom]
 name = Tom Becker
@@ -24,7 +24,7 @@ email = tom@becker.example
 status = At the gym
 
 [person lena]
-name = Lena Ström
+name = Lena StrÃ¶m
 phone = +46 73 987 65 43
 email = lena.strom@example.com
 status = Busy
@@ -34,6 +34,7 @@ status = Busy
 # Message syntax:   [optional timestamp] id: text
 # Timestamp forms:  [2026-10-20 09:15]  or  [09:15] (same day as previous)
 # Without a timestamp, previous time + random 30s..5min is used.
+# Continuation:    a line without 'id:' becomes a new message from the previous sender.
 # Attachments:      id: <image:path/to/file.jpg> optional caption
 #                   id: <video:path/to/file.mp4>
 #                   id: <audio:path/to/file.mp3>
@@ -45,15 +46,16 @@ start = 2026-10-20 09:15
 last_seen = online
 
 [2026-10-20 09:15] maya: Good morning! Did you see the new design?
-me: Just opened it, looks great 🎉
+me: Just opened it, looks great ðŸŽ‰
 maya: Right?! Take a look at this one too
-maya: <image:assets/maya.webp> The mood board
+<image:assets/maya.webp> The mood board
 me: Love the colours
 [09:40] maya: Voice note incoming
-maya: <audio:assets/note.mp3>
+<audio:assets/note.mp3>
 me: Listening now, one sec
 [2026-10-21 18:02] me: Lunch tomorrow?
 maya: Sure, 12:30 works
+See you tomorrow!
 
 [chat]
 title = Weekend Crew
@@ -65,7 +67,7 @@ lena: Me! Weather looks good
 maya: Count me in
 me: I'll bring snacks
 tom: <video:assets/trail.mp4> Trail preview
-lena: Looks steep 😅
+lena: Looks steep ðŸ˜…
 me: Perfect
 
 [chat]
@@ -74,3 +76,4 @@ start = 2026-10-19 14:00
 
 [14:00] tom: Did you finish the report?
 me: Almost, sending tonight
+
