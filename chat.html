@@ -1,0 +1,257 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat</title>
+<style>
+:root{
+  --bg-app:#d1d7db; --panel:#fff; --panel-head:#f0f2f5; --border:#e9edef;
+  --text:#111b21; --text2:#667781; --hover:#f5f6f6; --active:#f0f2f5;
+  --out:#d9fdd3; --in:#fff; --chat-bg:#efeae2; --chat-bg-img:1;
+  --input:#fff; --green:#00a884; --icon:#54656f; --shadow:0 1px .5px rgba(11,20,26,.13);
+  --date-bg:#fff; --link:#027eb5;
+}
+:root[data-theme=dark]{
+  --bg-app:#0b141a; --panel:#111b21; --panel-head:#202c33; --border:#222d34;
+  --text:#e9edef; --text2:#8696a0; --hover:#202c33; --active:#2a3942;
+  --out:#005c4b; --in:#202c33; --chat-bg:#0b141a; --chat-bg-img:.06;
+  --input:#2a3942; --icon:#aebac1; --shadow:none; --date-bg:#182229; --link:#53bdeb;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:"Segoe UI",Helvetica,Arial,sans-serif;background:var(--bg-app);color:var(--text);
+  display:flex;align-items:center;justify-content:center}
+.app{display:flex;width:min(1500px,96vw);height:min(920px,94vh);background:var(--panel);
+  box-shadow:0 6px 18px rgba(11,20,26,.2);overflow:hidden;border-radius:4px}
+button{background:none;border:0;color:var(--icon);cursor:pointer;display:flex;align-items:center;
+  justify-content:center;width:40px;height:40px;border-radius:50%;padding:0}
+button:hover{background:var(--hover)}
+svg{width:24px;height:24px;fill:currentColor}
+/* sidebar */
+.side{width:32%;min-width:300px;max-width:460px;border-right:1px solid var(--border);display:flex;flex-direction:column}
+.bar{height:60px;background:var(--panel-head);display:flex;align-items:center;padding:0 16px;gap:8px;flex:none}
+.bar .grow{flex:1;min-width:0}
+.bar .title{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .sub{font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.avatar{border-radius:50%;object-fit:cover;flex:none;display:block}
+.search{padding:8px 12px;border-bottom:1px solid var(--border)}
+.search input{width:100%;border:0;border-radius:8px;background:var(--panel-head);color:var(--text);
+  padding:9px 14px;font-size:14px;outline:0}
+.contacts{overflow-y:auto;flex:1}
+.contact{display:flex;gap:14px;padding:0 16px;height:72px;align-items:center;cursor:pointer}
+.contact:hover{background:var(--hover)}
+.contact.active{background:var(--active)}
+.contact .meta{flex:1;min-width:0;border-bottom:1px solid var(--border);height:100%;display:flex;flex-direction:column;justify-content:center}
+.contact .crow{display:flex;justify-content:space-between;gap:8px}
+.contact .name{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.contact .time{font-size:12px;color:var(--text2)}
+.contact .last{font-size:14px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* main */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.main .bar .avatar{cursor:pointer}
+.messages{flex:1;overflow-y:auto;padding:18px 6% 12px;position:relative;background:var(--chat-bg);
+  display:flex;flex-direction:column;gap:2px}
+.messages::before{content:"";position:absolute;inset:0;background:url(assets/bg.webp);background-size:412px;
+  opacity:var(--chat-bg-img);pointer-events:none}
+.messages>*{position:relative}
+.messages{isolation:isolate}
+.date{align-self:center;background:var(--date-bg);color:var(--text2);font-size:12.5px;padding:5px 12px;
+  border-radius:8px;margin:10px 0;box-shadow:var(--shadow)}
+.row{display:flex;gap:8px;align-items:flex-end}
+.row.out{justify-content:flex-end}
+.row.first{margin-top:8px}
+.row .spacer{width:32px;flex:none}
+.bubble{max-width:65%;padding:6px 8px 6px 9px;border-radius:8px;box-shadow:var(--shadow);font-size:14.2px;line-height:1.4;
+  background:var(--in);position:relative;word-wrap:break-word;overflow-wrap:anywhere}
+.out .bubble{background:var(--out)}
+.bubble .sender{display:block;font-weight:500;font-size:13px;cursor:pointer;width:max-content;max-width:100%;margin-bottom:1px}
+.bubble .sender:hover{text-decoration:underline}
+.bubble .text{white-space:pre-wrap}
+.bubble .ts{float:right;margin:6px 0 -3px 12px;font-size:11px;color:var(--text2);display:flex;gap:3px;align-items:center}
+.ticks{width:16px;height:11px;fill:#53bdeb}
+.bubble.media{padding:3px}
+.bubble.media .text{padding:4px 6px 0}
+.bubble.media .sender{padding:2px 6px 0}
+.bubble.media .ts{margin:2px 6px 2px 12px}
+.bubble img,.bubble video{display:block;max-width:330px;width:100%;border-radius:6px}
+.bubble audio{width:280px;max-width:100%;height:40px;display:block;margin:4px}
+.ph{width:300px;max-width:100%;height:190px;border-radius:6px;background:var(--panel-head);color:var(--text2);
+  display:flex;align-items:center;justify-content:center;font-size:13px;text-align:center;padding:10px}
+/* composer */
+.composer{background:var(--panel-head);padding:10px 16px;display:flex;align-items:center;gap:6px;flex:none}
+.composer .field{flex:1;background:var(--input);border-radius:8px;padding:0 14px;height:42px;display:flex;align-items:center}
+.composer input{flex:1;border:0;background:none;outline:0;color:var(--text);font-size:15px}
+.composer input::placeholder{color:var(--text2)}
+.composer button.rec{background:var(--green);color:#fff;width:48px;height:48px;margin-left:6px}
+.composer button.rec:hover{filter:brightness(1.08)}
+.composer button.rec svg{width:26px;height:26px}
+.composer button svg{width:26px;height:26px}
+/* hover card */
+#card{position:fixed;z-index:50;width:300px;background:var(--panel);color:var(--text);border-radius:12px;
+  box-shadow:0 8px 28px rgba(0,0,0,.3);overflow:hidden;display:none;border:1px solid var(--border)}
+#card .top{background:var(--panel-head);padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px}
+#card .nm{font-size:18px}
+#card dl{margin:0;padding:12px 18px 16px;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px}
+#card dt{color:var(--text2)}
+#card dd{margin:0;word-break:break-word}
+@media(max-width:800px){.side{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="bar"><div id="meAv"></div><div class="grow title" id="meName"></div>
+      <button id="theme" title="Toggle dark mode"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.5 0-1-.1-1.4A5.5 5.5 0 0 1 12.4 3.1 9 9 0 0 0 12 3z"/></svg></button>
+    </div>
+    <div class="search"><input id="q" placeholder="Search or start new chat"></div>
+    <div class="contacts" id="contacts"></div>
+  </aside>
+  <section class="main">
+    <div class="bar">
+      <div id="hAv"></div>
+      <div class="grow"><div class="title" id="hName"></div><div class="sub" id="hSub"></div></div>
+      <button title="Video call"><svg viewBox="0 0 24 24"><path d="M15 8v8H5V8h10m1-2H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4V7a1 1 0 0 0-1-1z"/></svg></button>
+      <button title="Voice call"><svg viewBox="0 0 24 24"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg></button>
+      <button title="Menu"><svg viewBox="0 0 24 24"><path d="M12 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg></button>
+    </div>
+    <div class="messages" id="msgs"></div>
+    <div class="composer">
+      <button title="Attach"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
+      <div class="field"><input placeholder="Message" aria-label="Message"></div>
+      <button title="Emoji"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm-3.5-9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm7 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM12 17.5c2.3 0 4.3-1.5 5-3.5H7c.7 2 2.700 3.500 5 3.500z"/></svg></button>
+      <button title="Camera"><svg viewBox="0 0 24 24"><path d="M9 3 7.2 5H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.200L15 3H9zm3 15a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg></button>
+      <button class="rec" title="Record voice message"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.100A7 7 0 0 0 19 11h-2z"/></svg></button>
+    </div>
+  </section>
+</div>
+<div id="card"></div>
+<script>
+const DATA = {"me": "me", "people": {"me": {"id": "me", "name": "Me", "me": true, "phone": "+46 70 123 45 67", "email": "me@example.com", "status": "Hey there! I am using WhatsApp."}, "maya": {"id": "maya", "name": "Maya Rivera", "avatar": "assets/maya.webp", "phone": "+1 555 010 2030", "email": "maya.rivera@example.com", "status": "Coffee first, questions later ☕"}, "tom": {"id": "tom", "name": "Tom Becker", "phone": "+49 151 2345 6789", "email": "tom@becker.example", "status": "At the gym"}, "lena": {"id": "lena", "name": "Lena Ström", "phone": "+46 73 987 65 43", "email": "lena.strom@example.com", "status": "Busy"}}, "chats": [{"members": ["maya"], "title": "Maya Rivera", "messages": [{"from": "maya", "text": "Good morning! Did you see the new design?", "ts": "2026-10-20T09:15:00"}, {"from": "me", "text": "Just opened it, looks great 🎉", "ts": "2026-10-20T09:16:38"}, {"from": "maya", "text": "Right?! Take a look at this one too", "ts": "2026-10-20T09:17:40"}, {"from": "maya", "text": "The mood board", "attach": {"type": "image", "src": "assets/maya.webp"}, "ts": "2026-10-20T09:20:20"}, {"from": "me", "text": "Love the colours", "ts": "2026-10-20T09:21:50"}, {"from": "maya", "text": "Voice note incoming", "ts": "2026-10-20T09:40:00"}, {"from": "maya", "text": "", "attach": {"type": "audio", "src": "assets/note.mp3"}, "ts": "2026-10-20T09:44:43"}, {"from": "me", "text": "Listening now, one sec", "ts": "2026-10-20T09:49:03"}, {"from": "me", "text": "Lunch tomorrow?", "ts": "2026-10-21T18:02:00"}, {"from": "maya", "text": "Sure, 12:30 works", "ts": "2026-10-21T18:06:31"}], "last_seen": "online", "group": false}, {"members": ["maya", "tom", "lena"], "title": "Weekend Crew", "messages": [{"from": "tom", "text": "Who's in for hiking on Saturday?", "ts": "2026-10-21T20:00:00"}, {"from": "lena", "text": "Me! Weather looks good", "ts": "2026-10-21T20:03:44"}, {"from": "maya", "text": "Count me in", "ts": "2026-10-21T20:06:01"}, {"from": "me", "text": "I'll bring snacks", "ts": "2026-10-21T20:07:19"}, {"from": "tom", "text": "Trail preview", "attach": {"type": "video", "src": "assets/trail.mp4"}, "ts": "2026-10-21T20:11:58"}, {"from": "lena", "text": "Looks steep 😅", "ts": "2026-10-21T20:12:42"}, {"from": "me", "text": "Perfect", "ts": "2026-10-21T20:16:31"}], "last_seen": "", "group": true}, {"members": ["tom"], "title": "Tom Becker", "messages": [{"from": "tom", "text": "Did you finish the report?", "ts": "2026-10-19T14:00:00"}, {"from": "me", "text": "Almost, sending tonight", "ts": "2026-10-19T14:04:11"}], "last_seen": "", "group": false}]};
+const NAME_COLORS = ["#e542a3","#1f7aec","#06cf9c","#ffa97c","#a275e3","#c4a000","#ff6b6b","#53bdeb","#7f66ff","#25d366"];
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const P = id => DATA.people[id];
+const colorOf = id => NAME_COLORS[[...id].reduce((a,c)=>a+c.charCodeAt(0),0) % NAME_COLORS.length];
+
+function avatar(id, size) {
+  const p = P(id) || {name:id};
+  if (p.avatar) return `<img class="avatar" width="${size}" height="${size}" src="${esc(p.avatar)}" alt="" onerror="this.outerHTML=fallback('${esc(id)}',${size})">`;
+  return fallback(id, size);
+}
+function fallback(id, size) {
+  const p = P(id) || {name:id};
+  const ini = (p.name || id).split(/\s+/).map(w => w[0]).slice(0,2).join("").toUpperCase();
+  return `<div class="avatar" style="width:${size}px;height:${size}px;background:${colorOf(id)};color:#fff;display:flex;align-items:center;justify-content:center;font-size:${size*.4}px">${esc(ini)}</div>`;
+}
+function groupAvatar(size) {
+  return `<div class="avatar" style="width:${size}px;height:${size}px;background:#6b7c85;color:#fff;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" style="width:${size*.6}px;height:${size*.6}px"><path d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 2c-2.300 0-7 1.200-7 3.500V19h14v-2.500C15 14.200 10.300 13 8 13zm8 0c-.3 0-.6 0-1 .1 1.200.9 2 2 2 3.400V19h6v-2.500c0-2.300-4.700-3.500-7-3.500z"/></svg></div>`;
+}
+const chatAvatar = (c, s) => c.group ? groupAvatar(s) : avatar(c.members[0], s);
+const fmtTime = d => d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", hour12:false});
+function fmtDate(d) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const day = new Date(d); day.setHours(0,0,0,0);
+  const diff = Math.round((today - day) / 864e5);
+  if (diff === 0) return "TODAY";
+  if (diff === 1) return "YESTERDAY";
+  return d.toLocaleDateString([], {day:"numeric", month:"long", year:"numeric"});
+}
+const TICKS = '<svg class="ticks" viewBox="0 0 16 11"><path d="M11.07.65 5.4 7.3 3.1 5.2l-.9.9L5.4 9l6.6-7.5zM15 .65 8.4 8.3l-.5-.45-.7.8 1.200 1.100L15.900 1.500z"/></svg>';
+
+function preview(m) {
+  const who = m.from === DATA.me ? "You: " : "";
+  const t = m.attach ? ({image:"ðŸ“· Photo",video:"ðŸŽ¥ Video",audio:"ðŸŽµ Audio"})[m.attach.type] + (m.text ? " " + m.text : "") : m.text;
+  return who + t;
+}
+
+let current = 0;
+function renderContacts() {
+  const q = $("q").value.toLowerCase();
+  $("contacts").innerHTML = DATA.chats.map((c, i) => {
+    if (q && !c.title.toLowerCase().includes(q)) return "";
+    const last = c.messages[c.messages.length - 1];
+    return `<div class="contact ${i === current ? "active" : ""}" data-i="${i}">${chatAvatar(c, 49)}
+      <div class="meta"><div class="crow"><span class="name">${esc(c.title)}</span><span class="time">${last ? fmtDate(new Date(last.ts)).replace(/^(TODAY|YESTERDAY)$/, s => s[0] + s.slice(1).toLowerCase()) : ""}</span></div>
+      <div class="last">${last ? esc(preview(last)) : ""}</div></div></div>`;
+  }).join("");
+}
+
+function media(a) {
+  const s = esc(a.src);
+  const ph = `this.outerHTML='<div class=ph>Missing ${a.type}:<br>${s}</div>'`;
+  if (a.type === "image") return `<img src="${s}" alt="" onerror="${ph}">`;
+  if (a.type === "video") return `<video src="${s}" controls preload="metadata" onerror="${ph}"></video>`;
+  return `<audio src="${s}" controls preload="metadata" onerror="${ph}"></audio>`;
+}
+
+function renderChat() {
+  const c = DATA.chats[current];
+  $("hAv").innerHTML = chatAvatar(c, 40); if (c.group) delete $("hAv").dataset.p; else $("hAv").dataset.p = c.members[0];
+  $("hName").textContent = c.title;
+  $("hSub").textContent = c.group ? c.members.map(m => P(m).name).concat("You").join(", ")
+    : (c.last_seen || P(c.members[0]).status || "");
+  let html = "", lastDay = "", prevFrom = null;
+  c.messages.forEach(m => {
+    const d = new Date(m.ts), day = d.toDateString();
+    if (day !== lastDay) { html += `<div class="date">${fmtDate(d)}</div>`; lastDay = day; prevFrom = null; }
+    const out = m.from === DATA.me, first = m.from !== prevFrom;
+    prevFrom = m.from;
+    const showName = c.group && !out && first;
+    let h = `<div class="row ${out ? "out" : ""} ${first ? "first" : ""}">`;
+    if (c.group && !out) h += first ? `<div data-p="${esc(m.from)}" class="who">${avatar(m.from, 32)}</div>` : `<div class="spacer"></div>`;
+    h += `<div class="bubble ${m.attach ? "media" : ""}">`;
+    if (showName) h += `<span class="sender" data-p="${esc(m.from)}" style="color:${colorOf(m.from)}">${esc(P(m.from).name)}</span>`;
+    if (m.attach) h += media(m.attach);
+    if (m.text) h += `<div class="text">${esc(m.text)}</div>`;
+    h += `<span class="ts">${fmtTime(d)}${out ? TICKS : ""}</span></div></div>`;
+    html += h;
+  });
+  $("msgs").innerHTML = html;
+  $("msgs").scrollTop = $("msgs").scrollHeight;
+  renderContacts();
+}
+
+// hover contact card
+const card = $("card");
+function showCard(el) {
+  const p = P(el.dataset.p);
+  const rows = [["phone", "Phone", p.phone], ["email", "Email", p.email], ["status", "Status", p.status]]
+    .filter(r => r[2]).map(r => `<dt>${r[1]}</dt><dd>${esc(r[2])}</dd>`).join("");
+  card.innerHTML = `<div class="top">${avatar(el.dataset.p, 96)}<div class="nm">${esc(p.name)}</div></div><dl>${rows}</dl>`;
+  card.style.display = "block";
+  const r = el.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
+  card.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px";
+  card.style.top = (r.bottom + h + 8 > innerHeight ? Math.max(8, r.top - h - 6) : r.bottom + 6) + "px";
+}
+let hideT;
+document.addEventListener("mouseover", e => {
+  const t = e.target.closest(".sender, .who, .bar #hAv");
+  if (t && t.dataset.p) { clearTimeout(hideT); showCard(t); }
+  else if (e.target.closest("#card")) clearTimeout(hideT);
+  else { clearTimeout(hideT); hideT = setTimeout(() => card.style.display = "none", 150); }
+});
+
+$("contacts").addEventListener("click", e => {
+  const el = e.target.closest(".contact");
+  if (el) { current = +el.dataset.i; renderChat(); }
+});
+$("q").addEventListener("input", renderContacts);
+
+// theme
+const root = document.documentElement;
+root.dataset.theme = localStorage.getItem("theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+$("theme").onclick = () => {
+  root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+  localStorage.setItem("theme", root.dataset.theme);
+};
+
+$("meAv").innerHTML = avatar(DATA.me, 40);
+$("meName").textContent = P(DATA.me).name;
+$("meAv").firstChild.dataset && ($("meAv").dataset.p = DATA.me);
+$("meAv").className = "who";
+renderChat();
+</script>
+</body>
+</html>
+
